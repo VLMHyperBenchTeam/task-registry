@@ -15,3 +15,4 @@ class MLTaskSchema(BaseRegistryModel):
     required_packages: List[str] = []
     supported_metrics: List[str] = []
     supported_reports: List[str] = []
+    supported_frameworks: List[str] = ["vllm", "huggingface", "sglang"]

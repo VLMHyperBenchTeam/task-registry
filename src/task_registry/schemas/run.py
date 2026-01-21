@@ -16,7 +16,8 @@ class ModelConfig(BaseModel):
     framework: str = "vllm"
     docker_image: Optional[str] = None
     package_manager: PackageManagerType = PackageManagerType.PIP
-    params: Dict[str, Any] = {}
+    engine_params: Dict[str, Any] = {}
+    env: Dict[str, str] = {}
 
 class RunTaskSchema(BaseRegistryModel):
     """
