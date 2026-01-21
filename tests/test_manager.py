@@ -20,6 +20,10 @@ def registry_setup(tmp_path):
     (reg_dir / "packages").mkdir(parents=True)
     (reg_dir / "tasks").mkdir(parents=True)
     (reg_dir / "metrics").mkdir(parents=True)
+    (reg_dir / "reports").mkdir(parents=True)
+    (reg_dir / "datasets").mkdir(parents=True)
+    (reg_dir / "runs").mkdir(parents=True)
+    (reg_dir / "experiments").mkdir(parents=True)
     
     # Create a package
     pkg_data = {
@@ -40,9 +44,10 @@ def registry_setup(tmp_path):
     task_data = {
         "name": "VQA",
         "entry_point": "vqa.main",
-        "supported_metrics": ["anls"]
+        "supported_metrics": ["anls"],
+        "supported_reports": ["vqa_report"]
     }
-    with open(reg_dir / "tasks" / "VQA.yaml", "w") as f:
+    with open(reg_dir / "tasks" / "vqa.yaml", "w") as f:
         yaml.dump(task_data, f)
         
     return reg_dir
@@ -73,10 +78,11 @@ def test_cross_validation(registry_setup):
     
     run = RunTaskSchema(
         name="test_run",
-        ml_task="VQA",
+        ml_task="vqa",
         model=ModelConfig(name="qwen"),
         dataset="some_ds",
-        metrics=["anls"]
+        metrics=["anls"],
+        reports=["vqa_report"]
     )
     
     # Should not raise
@@ -86,3 +92,24 @@ def test_cross_validation(registry_setup):
     run.metrics = ["unsupported"]
     with pytest.raises(ValueError, match="not supported"):
         manager.validate_run(run)
+
+def test_load_real_registries():
+    """
+    Test loading from the actual project registries if they exist.
+    """
+    registries_path = Path("VLMHyperBench/vlmhyperbench/registries")
+    if not registries_path.exists():
+        pytest.skip("Real registries not found")
+        
+    manager = RegistryManager(registries_path, run_mode="prod")
+    
+    # Test vqa task
+    vqa_task = manager.get_task("vqa")
+    assert vqa_task.name == "VQA"
+    
+    # Test run task
+    qwen_run = manager.get_run("qwen_docvqa_ru")
+    assert qwen_run.ml_task == "vqa"
+    
+    # Test validation
+    manager.validate_run(qwen_run)
